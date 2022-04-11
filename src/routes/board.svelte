@@ -2,16 +2,22 @@
 	const square_css =
 		'h-24 w-24 flex items-center justify-center cursor-pointer ring-inset hover:ring-4 ring-blue-500';
 	let turn = 'Noughts';
+
+	// represent board
+	// 0 = empty, 1 = nought, 2 = crosses
 	let board = [
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 	];
 
+	// create pattern as board
 	const boardcolour = (x,y) => {
 		if ( (x+y+2)%2 === 0) return "bg-gray-600"
 		else return "bg-gray-300"
 	}
+
+	// reset board back to start
 	const resetboard = () => {
 		board = [
 			[0, 0, 0],
@@ -19,26 +25,29 @@
 			[0, 0, 0]
 		];
 	};
+
+	// place alternating noughts & crosses on tile x,y
+	// 0 = empty, 1 = nought, 2 = crosses
 	const place = (x, y) => {
 		if (board[x][y] === 0) {
 			if (turn === 'Noughts') {
 				turn = 'Crosses';
 				board[x][y] = 1;
-
 			} else {
 				turn = 'Noughts';
 				board[x][y] = 2;
-
 			}
 		}
 	};
 
+	// takes array integer and returns noughts (empty since using tailwind to draw circle) or x for cross
 	const piece = (num) => {
 		if (num === 1) return '';
 		else if (num === 2) return 'x';
 		return '';
 	};
 
+	// takes array integer output tailwind styles to draw circle for nought, style x for cross
 	const classpiece = (num) => {
 		if (num === 1) return 'w-16 h-16 bg-none rounded-full border-4 border-blue-700';
 		else if (num === 2) return '-mt-8 text-8xl text-red-700';
