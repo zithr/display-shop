@@ -90,7 +90,7 @@
 			for (let i = 0; i < 3; i++) {
 				if (board[i][2 - i] != piece) break;
 				if (i == 2) {
-					piece === 1 ? console.log('Noughts wins') : console.log('Crosses wins');
+					piece === 1 ? (winner = 'Noughts') : (winner = 'Crosses');
 				}
 			}
 		}
