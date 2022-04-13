@@ -1,0 +1,49 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Node.js CI
+
+on:
+    push:
+        branches: [master]
+#   pull_request:
+#     branches: [ master ]
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest]
+                node-version: [14.x]
+                # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+        steps:
+            - uses: actions/checkout@v2
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+            - run: npm i
+            - run: npm run build --if-present
+
+            - name: Deploy to GitHub Pages
+              uses: crazy-max/ghaction-github-pages@v2
+              with:
+                allow_empty_commit: false
+                target_branch: gh-pages
+                build_dir: build
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+            # - name: Publish to Github Pages
+            #   if: github.ref == 'refs/heads/master'
+            #   uses: JamesIves/github-pages-deploy-action@releases/v3
+            #   with:
+            #       ACCESS_TOKEN: ${{ secrets.GITHUB_PAGES_TOKEN }}
+            #       BASE_BRANCH: master # The branch the action should deploy from.
+            #       BRANCH: gh-pages # The branch the action should deploy to.
+            #       FOLDER: build # The folder the action should deploy.
