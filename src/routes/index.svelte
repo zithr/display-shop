@@ -51,7 +51,7 @@
 	</div>
 	<main>
 		{#if loc === ''}
-			<div class="text-2xl font-bold">Default home page</div>
+			<div class="py-2 text-3xl underline font-bold text-gray-600">Default home page</div>
 		{:else if loc === 'about'}
 			<About />
 		{:else if loc === 'board'}

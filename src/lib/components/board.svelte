@@ -1,5 +1,6 @@
 <script>
 	import supabase from '$lib/db';
+	import { getSearchParamFromUrl } from '$lib/functions';
 	import { onMount } from 'svelte';
 
 	$: turn = 'Noughts';
@@ -14,21 +15,41 @@
 		[0, 0, 0]
 	];
 
+	let board_id = null;
+	let local_board = true;
+	let winner_msg = '';
+
 	// get latest board from db
 	// should be latest board from active player though
-	const getboard = async () => {
+	// get board of board id
+	const getboard = async (board_id) => {
 		let { data: boards, error } = await supabase
 			.from('boards')
 			.select('*')
+			.eq('id', board_id)
 			.order('id', { ascending: false })
 			.limit(1)
 			.single();
 		// console.log(boards, error);
+		if (error) {
+			console.log(error)
+		}
+		if (!boards) {
+			alert("Board not found!")
+			return
+		}
 		updateboard(boards);
 	};
 
 	// load & subscribe to the board on page mount
 	onMount(async () => {
+		board_id = getSearchParamFromUrl('board_id');
+
+		// if no id, set local board for testing
+		if (!board_id) {
+			return;
+		}
+		local_board = false;
 		getboard();
 		const mySubscription = supabase
 			.from('boards')
@@ -60,29 +81,33 @@
 		const y = check_board.last_loc[1];
 		const piece = check_board.last_move;
 		const check = check_board.board.layout;
+		let draw = true;
 
 		// check columns
 		for (let i = 0; i < 3; i++) {
-			if (check[x][i] != piece) break;
+			if (check[x][i] != piece || winner) break;
 			if (i == 2) {
 				piece === 1 ? (winner = 'Noughts') : (winner = 'Crosses');
 			}
+			if (winner) return
 		}
 		//check row
 		for (let i = 0; i < 3; i++) {
-			if (board[i][y] != piece) break;
+			if (board[i][y] != piece || winner) break;
 			if (i == 2) {
 				piece === 1 ? (winner = 'Noughts') : (winner = 'Crosses');
 			}
+			if (winner) return
 		}
 		//check diag
 		if (x == y) {
 			//we're on a diagonal
 			for (let i = 0; i < 3; i++) {
-				if (board[i][i] != piece) break;
+				if (board[i][i] != piece || winner) break;
 				if (i == 2) {
 					piece === 1 ? (winner = 'Noughts') : (winner = 'Crosses');
 				}
+				if (winner) return
 			}
 		}
 		//check anti diag
@@ -92,12 +117,33 @@
 				if (i == 2) {
 					piece === 1 ? (winner = 'Noughts') : (winner = 'Crosses');
 				}
+				if (winner) return
 			}
+		}
+
+		//tie check at end
+		for (let i = 0; i < 3; i++) {
+			for (let j = 0; j < 3; j++) {
+				if (check[i][j] == 0) {
+					draw = false;
+					break;
+				}
+			}
+		}
+		if (draw) {
+			winner = 'Tie';
+			return;
 		}
 	};
 
 	// add new board info to db
 	const insertboard = async (board, last_move, last_loc) => {
+		if (local_board) {
+			let board_info = { board: { layout: board }, last_move: last_move, last_loc: last_loc };
+			// console.log("0clue")
+			updateboard(board_info);
+			return;
+		}
 		const { data, error } = await supabase
 			.from('boards')
 			.insert([{ board: { layout: board }, last_move: last_move, last_loc: last_loc }]);
@@ -148,13 +194,21 @@
 		return '';
 	};
 
-	// tailwindcss logic
+	// winner message/css
 	const winnercolour = (winner) => {
-		if (winner === 'Noughts') return 'text-blue-700';
-		return 'text-red-700';
+		if (winner === 'Noughts') {
+			winner_msg = 'Noughts wins!';
+			return 'text-blue-700';
+		}
+		if (winner === 'Crosses') {
+			winner_msg = 'Crosses wins!';
+			return 'text-red-700';
+		}
+		winner_msg = 'Its a tie!'
+		return 'text-gray-700'
 	};
 
-	// tailwindcss logic
+	// game over, block cursor
 	const cursorwinner = (winner) => {
 		if (!winner) {
 			return 'cursor-pointer hover:ring-4';
@@ -163,10 +217,10 @@
 	};
 </script>
 
-<div class="container mx-auto py-4">
-	<div class="text-3xl py-2">Tic-Tac-Toe</div>
+<div class="container mx-auto py-2">
+	<div class="text-3xl pb-2 text-gray-600 font-bold underline">Tic-Tac-Toe</div>
 	{#if !winner}
-		<div class="my-3 text-xl">{turn} to move!</div>
+		<div class="my-3 text-xl text-gray-400">{turn} to move!</div>
 	{/if}
 	<div class="flex">
 		<board>
@@ -193,7 +247,7 @@
 							winner
 						)}`}
 					>
-						{winner} wins!
+						{winner_msg}
 					</div>
 				</div>
 			</div>
